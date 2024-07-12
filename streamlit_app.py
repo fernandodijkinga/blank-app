@@ -10,9 +10,9 @@ idioma = "portugues"
 client = Groq(api_key="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")
 
 # Load the CSV files
-file_path = '/workspaces/blank-app/Touros202404.csv'
+file_path = '.github/Touros202404.csv'
 touros_df = pd.read_csv(file_path, delimiter=";")
-traits_file_path = '/workspaces/blank-app/traits.csv'
+traits_file_path = '.github/traits.csv'
 traits_df = pd.read_csv(traits_file_path, delimiter=";")
 
 # Ensure all values in 'ShortName', 'NAABCode', 'BullKey', 'LongName', and 'Company' are treated as strings
