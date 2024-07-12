@@ -219,7 +219,7 @@ def generate_response(prompt):
             }
         ],
         model="llama3-70b-8192",
-        max_tokens=5000  # Limit the tokens to 5000
+        max_tokens=50000  # Limit the tokens to 50000
     )
     response = chat_completion.choices[0].message.content
     return response
