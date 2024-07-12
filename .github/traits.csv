@@ -1,0 +1,65 @@
+﻿trait;definition;min;max;nature;desired_value
+Health;"The Health Trait Index combines the following health traits, developed by the Council on Dairy Cattle Breeding, into one economic value. The traits included are Milk Fever, Displaced Abomasum, Ketosis, Mastitis, Metritis and Retained Placenta. Higher values are more desirable.
+
+Health index = (0.34 x Hypocalcemia) + (1.97 x displaced abomasum) + (0.28 x ketosis) + (1.50 x mastitis) + (1.12 x metritis) + (0.68 x retained placenta)";-15;15;score;higher
+ProductionEfficiency;"Feed Efficiency $ index reflects good feed utilization. It includes better utilization of the feed to produce extra pounds of milk, fat, and protein; feed saved from cows with a lower body weight and less maintenance costs; and feed saved from better feed conversion. This last part is known as residual feed intake (RFI), i.e., the difference in efficiency that we see between cows after accounting for the feed that goes into the maintenance of the cow and the production of milk. Production $ + Body Weight Composite $ + Residual Feed Intake $ FE$ is calculated as follows: FE$ = ($0.0008 x PTA Milk) + ($1.55 x PTA Fat) + ($1.73 x PTA Protein) + ($0.11 x Feed Saved)";-500;500;dollars;higher
+FertilityAndFitness;The Fertility Index combines several reproductive components into one overall index: ability to conceive as a maiden heifer, ability to conceive as a lactating cow, and a cow’s overall ability to start cycling again, show heat, conceive, and maintain a pregnancy. The Fertility Index is derived from the formula: FI = 18% Heifer Conception Rate (HCR) + 18% Cow Conception Rate (CCR) + 64% Daughter Pregnancy Rate (DPR);-5;5;score;higher
+LifetimeNetMerit;;;;;
+LifetimeCheeseMerit;;;;;
+TPI;Weighting of Major Categories: Production: 46% (Fat, Protein, Body Weight Composite, and Feed Efficiency), Health & Fertility: 28% (SCS, PL, HT, LIV, FI, DCE and DSB), Conformation: 26% (PTAT, UDC and FLC). Use of the TPI Formula will lead to: Additional pounds of Fat and Protein, with slightly more gain in Butterfat. Body Weight of the next generation of cows should be consistent with the current population. Greater feed efficiency through improved production, controlling maintenance costs, and better feed conversion. An added benefit of the better control of the size of our cattle is a lowering of the incidence of difficult births, with a slight improvement in the daughter's ability to deliver a live calf. Higher economic returns by lowering the incidence of on-farm deaths and improving the productive period of months-in-milk. Conformation of our cattle will continue to improve from genetic improvement of overall conformation (PTAT), udders and feet & legs. Dairy farmers using the TPI formula will be breeding a more profitable herd of cattle.;0;3400;score;higher
+Milk;PTA Milk predicts the expected milk production of future mature daughters, in pounds, in comparison to other cows of the breed born in the same base year.;-4000;3500;lbs;higher
+Fat;PTA Fat predicts the expected milkfat production of future mature daughters, in pounds, in comparison to other cows of the breed born in the same base year.;-200;150;lbs;higher
+FatPercent;"Fat Percent predicts the animal’s genetic ability to transmit concentration of milkfat; expressed as percentage points in comparison to the breed base.";-0,5;0,5;%;higher
+Protein;PTA Protein predicts the expected milk protein production of future mature daughters, in pounds, in comparison to other cows of the breed born in the same base year.;-200;150;lbs;higher
+ProteinPercent;"Protein Percent predicts the animal’s genetic ability to transmit concentration of milk protein; expressed as percentage points in comparison to the breed base.";-0,5;0,5;%;higher
+CombinedFatAndProtein;Combination or sum of fat and protein components;-300;300;lbs;higher
+ProductiveLife;"Productive Life predicts the time that female offspring are expected to remain in milking herd before removal by culling or death; expressed as difference in months of productivity compared to the breed base.";-10;10;months;higher
+CowLivability;"Cow Livability predicts the difference in female offspring expected to remain alive while in the milking herd; expressed in percentage points from the breed base.";-5;5;%;higher
+SomaticCellScore;Somatic Cell Score (SCS) indicates genetic susceptibility for udder health, as revealed through somatic cell count. Animals with PTA SCS <3.0 are expected to transmit favorable udder health, while animals with PTA SCS >3.0 are expected to have daughters with cell counts higher than breed average.;2.4;3.3;score;lower
+DaughterPregnancyRate;Daughter Pregnancy Rate is a female fertility trait that predicts the percentage of non-pregnant cows that will become pregnant during each 21-day period compared to the breed base.;-10;10;%;higher
+CowConceptionRate;Cow Conception Rate is a female fertility trait predicting the lactating cow’s ability to conceive, defined as expected percentage to become pregnant at each insemination in comparison to the breed base.;-10;10;%;higher
+HeiferConceptionRate;Heifer Conception Rate is a female fertility trait predicting the maiden heifer’s ability to conceive, defined as expected percentage to become pregnant at each insemination in comparison to the breed base.;-10;10;%;higher
+ExpectedFutureInbreeding;;;;;
+CDCBHypocaicemia;Expected resistance of an animal’s offspring to hypocalcemia (milk fever) compared to the breed average base, expressed in percentage points.;-4;4;%;higher
+CDCBDisplacedAbomasum;Expected resistance of an animal’s offspring to displaced abomasum compared to the breed average base, expressed in percentage points.;-4;4;%;higher
+CDCBKetosis;Expected resistance of an animal’s offspring to ketosis compared to the breed average base, expressed in percentage points.;-4;4;%;higher
+CDCBMastitis;Expected resistance of an animal’s offspring to clinical mastitis compared to the breed average base, expressed in percentage points.;-4;4;%;higher
+CDCBMetritis;Expected resistance of an animal’s offspring to metritis compared to the breed average base, expressed in percentage points.;-4;4;%;higher
+CDCBRetainedPlacenta;Expected resistance of an animal’s offspring to retained placenta compared to the breed average base, expressed in percentage points.;-4;4;%;higher
+BodyConditionScore;;;;;
+MilkingSpeed;;;;;
+MilkingTemperament;;;;;
+SireCalvingEase;;;;;
+SireStillbirth;;;;;
+PredictedTransmittingAbilityType;PTA Type Predicts the animal’s genetic ability to transmit to the offspring’s final classification or appraisal score in the breed’s program.;-5;5;score;higher
+UdderComposite;Udder Composite is an index that combines several udder traits, weighting the linear traits in the index by their economic benefit.;-5;5;score;higher
+FeetAndLegComposite;Feet and Legs Composite is an index that combines several feet and leg traits, weighting the linear traits in the index by their economic benefit.;-5;5;score;higher
+BodySizeComposite;Body Weight Composite is an index of body size (dimensions of the cow) and dairy form, weighting the linear traits in the index by their economic benefit.;-5;5;score;mean, close to zero
+DairyComposite;;-5;5;score;higher
+Stature;;;;;
+Strength;;;;;
+BodyDepth;;;;;
+DairyForm;;;;;
+RumpAngle;;;;;
+ThurlWidth;;;;;
+RearLegsSideView;;;;;
+RearLegsRearView;;;;;
+FootAngle;;;;;
+FeetAndLegsScore;;;;;
+ForeUdderAttachment;;;;;
+RearUdderHeight;;;;;
+RearUdderWidth;;;;;
+UdderDepth;;;;;
+UdderCleft;;;;;
+FrontTeatPlacement;;;;;
+RearTeatPlacement;;;;;
+TeatLength;;;;;
+BetaCasein;;;;;
+KappaCasein;;;;;
+FeedSaved;"Feed Saved indicates the expected reduction of feed consumed each lactation based on evaluations for Residual Feed Intake and Body Weight Composite; measured in pounds of dry matter intake.";-300;300;lbs;higher
+HeiferLivability;"Heifer Livability predicts the difference in female young offspring expected to remain alive between 2 days after birth and 18 months of age; expressed in percentage points from the breed base.";-5;5;%;higher
+DurationPregnancy;Gestation Length is the expected influence the animal will have on the days that their female offspring carry their calves, compared to the breed average base.;-4;4;days;mean, close to zero
+AgeFirstChildbirth;Early First Calving indicates the animal’s genetic ability to alter their female offspring’s age at first calving, defined in days compared to the breed base.;-12;12;days;mean, close to zero
+Sirecalvingease;Sire Calving Ease predicts the tendency of service sires to produce offspring that are delivered easily, expressed as percentage of births of bull calves coded difficult for first calf (primiparous) heifers compared to other A.I. bulls born in 2015.;0;10;%;lower
+Sirestillbirth;Sire Stillbirth predicts the tendency of service sires to produce offspring that are stillborn (dead at birth or within 48 hours of birth), expressed as percent compared to other A.I. bulls born between 2011 and 2015.;0;10;%;lower
+Sireconceptionrate;Sire Conception Rate is a male fertility trait that predicts future differences in conception rates of service sires, as percentage points deviation from the average of the breeds’ A.I. bulls.;-4;4;%;higher
