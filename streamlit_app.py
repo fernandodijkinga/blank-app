@@ -7,7 +7,7 @@ from scipy.spatial.distance import euclidean
 idioma = "portugues"
 
 # Initialize Groq client
-client = Groq(api_key="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")
+client = Groq(api_key="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")
 
 # Load the CSV files
 file_path = '.github/Touros202404.csv'
