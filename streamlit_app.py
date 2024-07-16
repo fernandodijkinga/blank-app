@@ -1,217 +1,19 @@
 import streamlit as st
 import pandas as pd
-import re
-from groq import Groq
+import numpy as np
 from scipy.spatial.distance import euclidean
-
-idioma = "portugues"
+from groq import Groq
 
 # Initialize Groq client
 client = Groq(api_key="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")
 
-# Load the CSV files
-file_path = '.github/Touros202404.csv'
-touros_df = pd.read_csv(file_path, delimiter=";")
-traits_file_path = '.github/traits.csv'
-traits_df = pd.read_csv(traits_file_path, delimiter=";")
-
-# Ensure all values in 'ShortName', 'NAABCode', 'BullKey', 'LongName', and 'Company' are treated as strings
-touros_df['ShortName'] = touros_df['ShortName'].astype(str)
-touros_df['NAABCode'] = touros_df['NAABCode'].astype(str)
-touros_df['BullKey'] = touros_df['BullKey'].astype(str)
-touros_df['LongName'] = touros_df['LongName'].astype(str)
-touros_df['Company'] = touros_df['Company'].astype(str)
-
-# Print columns for debugging
-print("Columns in traits_df:", traits_df.columns)
-
-# Trait mapping (example, you can expand this as needed)
-trait_mapping = {
-    "Health": ["indice de saude", "filhas mais saudaveis"],
-    "ProductionEfficiency": "eficiencia alimentar",
-    "FertilityAndFitness": "indice de fertilidade",
-    "LifetimeNetMerit": "Merito Liquido",
-    "LifetimeCheeseMerit": "Merito de Queijo",
-    "TPI": "TPI",
-    "Milk": "Leite",
-    "Fat": "Gordura",
-    "FatPercent": "Percentual de Gordura",
-    "Protein": "Proteina",
-    "ProteinPercent": "Percentual de Proteina",
-    "CombinedFatAndProtein": "Gordura e Proteína Combinadas",
-    "ProductiveLife": "Vida Produtiva",
-    "CowLivability": "Viabilidade da Vaca",
-    "SomaticCellScore": "Células Somáticas",
-    "DaughterPregnancyRate": ["DPR", "Taxa de prenhez", "dpr"],
-    "CowConceptionRate": ["CCR", "Taxa de concepcao de vacas"],
-    "HeiferConceptionRate": ["HCR", "Taxa de concepcao de novilhas"],
-    "ExpectedFutureInbreeding": ["Consanguinidade", "Endogamia", "consanguinidade futura", "consanguinidade esperada", "consanguinidade esperada das filhas"],
-    "CDCBHypocaicemia": ["Febre do leite", "Hipocalcemia"],
-    "CDCBDisplacedAbomasum": "Deslocamento de abomaso",
-    "CDCBKetosis": "Cetose",
-    "CDCBMastitis": "Mastite",
-    "CDCBMetritis": "Metrite",
-    "CDCBRetainedPlacenta": "Retencao de placenta",
-    "BodyConditionScore": "Escore de condicao corporal",
-    "MilkingSpeed": "Velocidade de ordenha",
-    "MilkingTemperament": "Temperamento na ordenha",
-    "SireCalvingEase": "facilidade de parto",
-    "SireStillbirth": "natimortos",
-    "PredictedTransmittingAbilityType": ["PTAT", "pontuacao final", "pta tipo", "conformacao"],
-    "UdderComposite": ["Composto de ubere", "ubere mais alto e largo"],
-    "FeetAndLegComposite": "composto de pernas e pés",
-    "BodySizeComposite": "composto corporal",
-    "DairyComposite": "composto leiteiro",
-    "Stature": ["estatura", "altura"],
-    "Strength": "força",
-    "BodyDepth": "profundidade corporal",
-    "DairyForm": ["forma leiteira", "angulosidade"],
-    "RumpAngle": "angulo de garupa",
-    "ThurlWidth": "largura de garupa",
-    "RearLegsSideView": "pernas vista lateral",
-    "RearLegsRearView": "pernas vista posterior",
-    "FootAngle": "angulo de casco",
-    "FeetAndLegsScore": ["escore de pernas e pés", "locomocao"],
-    "ForeUdderAttachment": ["insercao de ubere anterior", "ubere anterior", "fore udder attachment"],
-    "RearUdderHeight": ["altura de ubere posterior", "ubere mais alto"],
-    "RearUdderWidth": ["largura de ubere posterior", "ubere mais largo"],
-    "UdderDepth": ["ligamento central", "ligamento suspensorio"],
-    "UdderCleft": "profundidade de ubere posterior",
-    "FrontTeatPlacement": "colocacao de tetos anteriores",
-    "RearTeatPlacement": "colocacao de tetos posteriores",
-    "TeatLength": "comprimento de tetos",
-    "BetaCasein": "Beta caseina",
-    "KappaCasein": "Kappa caseina",
-    "FeedSaved": "feed saved",
-    "HeiferLivability": ["taxa de sobrevivencia de novilhas", "heifer livability"],
-    "DurationPregnancy": "duracao da gestacao",
-    "AgeFirstChildbirth": "idade ao primeiro parto",
-}
-
-# Flatten the trait mapping for easier keyword detection in user query
-keyword_to_trait = {}
-for trait, keywords in trait_mapping.items():
-    if isinstance(keywords, list):
-        for keyword in keywords:
-            keyword_to_trait[keyword.lower()] = trait
-    else:
-        keyword_to_trait[keywords.lower()] = trait
-
-# Function to search for the specific bulls and retrieve PTA values for multiple traits
-def get_bull_pta(dataframe, traits):
-    pta_data = {}
-    for index, row in dataframe.iterrows():
-        bull_name = row['ShortName']
-        pta_values = {}
-        for trait in traits:
-            if trait in row:
-                pta_values[trait] = row[trait]
-            else:
-                pta_values[trait] = "Trait not found"
-        pta_data[bull_name] = pta_values
-    return pta_data
-
-# Function to extract relevant traits from the user's query
-def extract_relevant_traits(query):
-    query_lower = query.lower()
-    relevant_traits = [keyword_to_trait[keyword] for keyword in keyword_to_trait if keyword in query_lower and keyword_to_trait[keyword] != 'Company']
-    return relevant_traits if relevant_traits else ["TPI", "Milk", "Fat", "FatPercent", "Protein", "ProteinPercent", "ProductionEfficiency", "ProductiveLife", "SomaticCellScore", "DaughterPregnancyRate", "Health", "PredictedTransmittingAbilityType", "UdderComposite", "FeetAndLegComposite"]  # Default to common traits if no specific traits are mentioned
-
-# Function to extract company names from the user's query
-def extract_company_names(query, known_companies):
-    company_names = []
-    for company in known_companies:
-        if re.search(r'\b' + re.escape(company) + r'\b', query, re.IGNORECASE):
-            company_names.append(company)
-    return company_names
-
-# Function to extract bull names from the user's query
-def extract_bull_names(query, known_bulls):
-    bull_names = []
-    for bull in known_bulls:
-        if isinstance(bull, float):  # Ensure bull is a string
-            bull = str(bull)
-        # Use word boundaries to avoid partial matches
-        if re.search(r'\b' + re.escape(bull) + r'\b', query, re.IGNORECASE):
-            bull_names.append(bull)
-    return bull_names
-
-# Function to find trait definition in the CSV file
-def find_trait_definition(traits, traits_df):
-    trait_definitions = []
-    for trait in traits:
-        print(f"Searching definition for trait: {trait}")  # Debug print
-        trait_lower = trait.lower()
-        matching_traits = traits_df[traits_df['trait'].str.lower().str.contains(trait_lower)]
-        if not matching_traits.empty:
-            for _, row in matching_traits.iterrows():
-                definition = row['definition']
-                min_val = row['min']
-                max_val = row['max']
-                nature = row['nature']
-                desired_value = row['desired_value']
-                trait_definitions.append(f"Traço: {row['trait']}\nDefinição: {definition}\nMin: {min_val}\nMax: {max_val}\nNatureza: {nature}\nValor desejado: {desired_value}\n")
-        else:
-            trait_definitions.append(f"No definition found for trait: {trait}")  # Debug print
-    return trait_definitions
-
-# Function to find a similar bull from a specified company
-def find_similar_bull(bull_name, target_company, traits, dataframe):
-    # Get the PTA values of the specified bull
-    print(f"Finding similar bull for: {bull_name} in company: {target_company} using traits: {traits}")  # Debug print
-    specified_bull_pta = dataframe[
-        (dataframe['ShortName'].str.lower() == bull_name.lower()) |
-        (dataframe['NAABCode'].str.lower() == bull_name.lower()) |
-        (dataframe['BullKey'].str.lower() == bull_name.lower()) |
-        (dataframe['LongName'].str.lower() == bull_name.lower())
-    ]
-    if specified_bull_pta.empty:
-        return f"Touro {bull_name} não encontrado."
-
-    specified_bull_pta = specified_bull_pta.iloc[0]
-    print(f"PTA values for {bull_name}: {specified_bull_pta[traits]}")  # Debug print
-    specified_pta_values = specified_bull_pta[traits].apply(pd.to_numeric, errors='coerce').fillna(0)
-    print(f"Processed PTA values for {bull_name}: {specified_pta_values}")  # Debug print
-
-    # Filter bulls from the target company
-    company_bulls = dataframe[dataframe['Company'].str.lower() == target_company.lower()]
-    if company_bulls.empty:
-        return f"Nenhum touro encontrado na empresa {target_company}."
-    
-    print(f"Found {len(company_bulls)} bulls in company {target_company}")  # Debug print
-
-    # Find the most similar bull
-    min_distance = float('inf')
-    similar_bull = None
-    similar_bull_values = None
-
-    for index, row in company_bulls.iterrows():
-        row_pta_values = row[traits].apply(pd.to_numeric, errors='coerce').fillna(0)
-        distance = euclidean(specified_pta_values, row_pta_values)
-        print(f"Comparing {bull_name} with {row['ShortName']}, distance: {distance}")  # Debug print
-        if distance < min_distance:
-            min_distance = distance
-            similar_bull = row['ShortName']
-            similar_bull_values = row[traits]
-
-    if similar_bull:
-        comparison = pd.DataFrame({
-            "Trait": traits,
-            f"{bull_name}": specified_pta_values,
-            f"{similar_bull}": similar_bull_values
-        })
-        comparison_table = comparison.to_string(index=False)
-        return f"Touro semelhante encontrado na empresa {target_company}: {similar_bull}\n\nComparação de valores PTA:\n{comparison_table}"
-    else:
-        return f"Nenhum touro semelhante encontrado na empresa {target_company}."
-
-# Function to generate chat completion
+# Function to generate LLM response
 def generate_response(prompt):
     chat_completion = client.chat.completions.create(
         messages=[
             {
                 "role": "system",
-                "content": f"Você é um especialista em melhoramento genético animal e bovinos leiteiros. Responda sempre em {idioma}"
+                "content": "Você é um especialista em melhoramento genético animal e bovinos leiteiros. Responda sempre em português."
             },
             {
                 "role": "user",
@@ -219,141 +21,225 @@ def generate_response(prompt):
             }
         ],
         model="llama3-70b-8192",
-        max_tokens=50000  # Limit the tokens to 50000
+        max_tokens=5000  # Limit the tokens to 5000
     )
     response = chat_completion.choices[0].message.content
     return response
 
-# Streamlit app
-st.title('GenMate Conversational Interface')
-st.write('Faça uma pergunta sobre touros e traços genéticos.')
+# Function to normalize data
+def normalize(df, columns):
+    available_columns = [col for col in columns if col in df.columns]
+    return (df[available_columns] - df[available_columns].mean()) / df[available_columns].std()
 
-# Initialize session state for user query
-if 'user_query' not in st.session_state:
-    st.session_state.user_query = ""
+# Load CSV files
+touros_df = pd.read_csv('.github/Touros202404.csv', delimiter=";")
+traits_file_path = '.github/traits.csv'
+traits_df = pd.read_csv(traits_file_path, delimiter=";")
 
-# Function to handle form submission
-def submit_form():
-    user_query = st.session_state.user_query
-    # List of known companies
-    known_companies = touros_df['Company'].unique()
+# Confirm column names
+touros_key_column = 'BullKey' if 'BullKey' in touros_df.columns else 'BullCode'
 
-    # List of known bull names
-    known_bulls = touros_df['ShortName'].unique().tolist() + touros_df['NAABCode'].unique().tolist() + touros_df['BullKey'].unique().tolist() + touros_df['LongName'].unique().tolist()
+# Trait mapping
+trait_mapping = {
+    "Health": "Índice de Saúde",
+    "ProductionEfficiency": "Eficiência Alimentar",
+    "FertilityAndFitness": "Índice de Fertilidade",
+    "LifetimeNetMerit": "Mérito Líquido",
+    "LifetimeCheeseMerit": "Mérito de Queijo",
+    "TPI": "TPI",
+    "Milk": "Leite",
+    "Fat": "Gordura",
+    "FatPercent": "Percentual de Gordura",
+    "Protein": "Proteína",
+    "ProteinPercent": "Percentual de Proteína",
+    "CombinedFatAndProtein": "Gordura e Proteína Combinadas",
+    "ProductiveLife": "Vida Produtiva",
+    "CowLivability": "Taxa de Sobrevivência da Vaca",
+    "SomaticCellScore": "Células Somáticas",
+    "DaughterPregnancyRate": "DPR - Taxa de Prenhez",
+    "CowConceptionRate": "CCR - Taxa de Concepção de Vacas",
+    "HeiferConceptionRate": "HCR - Taxa de Concepção de Novilhas",
+    "ExpectedFutureInbreeding": "Consanguinidade Esperada das Filhas",
+    "CDCBHypocaicemia": "Hipocalcemia",
+    "CDCBDisplacedAbomasum": "Deslocamento de Abomaso",
+    "CDCBKetosis": "Cetose",
+    "CDCBMastitis": "Mastite",
+    "CDCBMetritis": "Metrite",
+    "CDCBRetainedPlacenta": "Retenção de Placenta",
+    "BodyConditionScore": "Escore de Condição Corporal",
+    "MilkingSpeed": "Velocidade de Ordenha",
+    "MilkingTemperament": "Temperamento na Ordenha",
+    "SireCalvingEase": "Facilidade de Parto",
+    "SireStillbirth": "Natimortos",
+    "PredictedTransmittingAbilityType": "PTAT",
+    "UdderComposite": "Composto de Úbere",
+    "FeetAndLegComposite": "Composto de Pernas e Pés",
+    "BodySizeComposite": "Composto Corporal",
+    "DairyComposite": "Composto Leiteiro",
+    "Stature": "Estatura",
+    "Strength": "Força",
+    "BodyDepth": "Profundidade Corporal",
+    "DairyForm": "Forma Leiteira",
+    "RumpAngle": "Ângulo de Garupa",
+    "ThurlWidth": "Largura de Garupa",
+    "RearLegsSideView": "Pernas Vista Lateral",
+    "RearLegsRearView": "Pernas Vista Posterior",
+    "FootAngle": "Ângulo de Casco",
+    "FeetAndLegsScore": "Escore de Pernas e Pés",
+    "ForeUdderAttachment": "Inserção de Úbere Anterior",
+    "RearUdderHeight": "Altura de Úbere Posterior",
+    "RearUdderWidth": "Largura de Úbere Posterior",
+    "UdderDepth": "Ligamento Central",
+    "UdderCleft": "Profundidade de Úbere Posterior",
+    "FrontTeatPlacement": "Colocação de Tetos Anteriores",
+    "RearTeatPlacement": "Colocação de Tetos Posteriores",
+    "TeatLength": "Comprimento de Tetos",
+    "BetaCasein": "Beta Caseína",
+    "KappaCasein": "Kappa Caseína",
+    "FeedSaved": "Feed Saved",
+    "HeiferLivability": "Taxa de Sobrevivência de Novilhas",
+    "DurationPregnancy": "Duração da Gestação",
+    "AgeFirstChildbirth": "Idade ao Primeiro Parto"
+}
 
-    # Convert all known bulls to strings
-    known_bulls = [str(bull) for bull in known_bulls]
+# Trait groups
+main_traits = ["TPI", "LifetimeNetMerit", "LifetimeCheeseMerit", "Milk", "Fat", "Protein", "ProductionEfficiency", "ProductiveLife", "CowLivability", "SomaticCellScore", "Health", "DaughterPregnancyRate", "PredictedTransmittingAbilityType", "UdderComposite", "FeetAndLegComposite"]
+index_traits = ["TPI", "LifetimeNetMerit", "LifetimeCheeseMerit"]
+production_traits = ["Milk", "Fat", "FatPercent", "Protein", "ProteinPercent", "ProductionEfficiency"]
+health_traits = ["ProductiveLife", "CowLivability", "SomaticCellScore", "Health"]
+fertility_traits = ["DaughterPregnancyRate", "CowConceptionRate", "HeiferConceptionRate", "FertilityAndFitness"]
+compounds_traits = ["PredictedTransmittingAbilityType", "UdderComposite", "FeetAndLegComposite", "BodySizeComposite", "DairyComposite"]
+conformation_traits = ["Stature", "Strength", "BodyDepth", "DairyForm", "RumpAngle", "ThurlWidth", "RearLegsSideView", "RearLegsRearView", "FootAngle", "FeetAndLegsScore", "ForeUdderAttachment", "RearUdderHeight", "RearUdderWidth", "UdderDepth", "UdderCleft", "FrontTeatPlacement", "RearTeatPlacement", "TeatLength"]
 
-    # Extract company names from the query
-    company_names = extract_company_names(user_query, known_companies)
-    print(f"Extracted company names: {company_names}")  # Debug print
+# Function to generate formatted prompt for multiple bulls
+def gerar_prompt_touros(touros, traits_df):
+    prompt = ""
+    for _, touro in touros.iterrows():
+        prompt += "**Informações do touro**\n"
+        prompt += f"Apelido: {touro['ShortName']}\n"
+        prompt += f"Nome: {touro['LongName']}\n"
+        prompt += f"NAAB: {touro['NAABCode']}\n"
+        prompt += f"Registro: {touro[touros_key_column]}\n\n"
+        
+        prompt += "**Índices**\n"
+        for trait in index_traits:
+            if trait in touro:
+                prompt += f"\n{trait_mapping[trait]}: {touro[trait]}\n"
+        
+        prompt += "\n**Características de produção e eficiência**\n"
+        for trait in production_traits:
+            if trait in touro:
+                prompt += f"\n{trait_mapping[trait]}: {touro[trait]}\n"
+        
+        prompt += "\n**Longevidade e saúde**\n"
+        for trait in health_traits:
+            if trait in touro:
+                prompt += f"\n{trait_mapping[trait]}: {touro[trait]}\n"
+        
+        prompt += "\n**Fertilidade e parto**\n"
+        for trait in fertility_traits:
+            if trait in touro:
+                prompt += f"\n{trait_mapping[trait]}: {touro[trait]}\n"
+        
+        prompt += "\n**Compostos**\n"
+        for trait in compounds_traits:
+            if trait in touro:
+                prompt += f"\n{trait_mapping[trait]}: {touro[trait]}\n"
 
-    # Extract bull names from the query
-    bull_names = extract_bull_names(user_query, known_bulls)
-    print(f"Extracted bull names: {bull_names}")  # Debug print
+        prompt += "\n\n"
 
-    # Extract relevant traits from the query
-    relevant_traits = extract_relevant_traits(user_query)
-    print(f"Extracted relevant traits: {relevant_traits}")  # Debug print
+    return prompt
 
-    # Ensure only one bull per name
-    if bull_names:
-        bull_names = list(dict.fromkeys(bull_names))
+# Function to display formatted bull information with smaller font
+def exibir_informacoes_touro(touro):
+    st.markdown("<div style='font-size: small;'>", unsafe_allow_html=True)
+    st.write(gerar_prompt_touros(pd.DataFrame([touro]), traits_df))
+    st.markdown("</div>", unsafe_allow_html=True)
 
-    # Check for similarity query
-    if "semelhante" in user_query.lower() or "parecido" in user_query.lower():
-        # Extract specified bull name and target company
-        specified_bull = None
-        target_company = None
-        for bull in known_bulls:
-            if bull.lower() in user_query.lower():
-                specified_bull = bull
-                break
-        for company in known_companies:
-            if company.lower() in user_query.lower():
-                target_company = company
-                break
-
-        if specified_bull and target_company:
-            # Use relevant_traits as default if no specific traits are mentioned
-            if not relevant_traits:
-                relevant_traits = ["TPI", "Milk", "Fat", "FatPercent", "Protein", "ProteinPercent", "ProductionEfficiency", "ProductiveLife", "SomaticCellScore", "DaughterPregnancyRate", "Health", "PredictedTransmittingAbilityType", "UdderComposite", "FeetAndLegComposite"]
-            similar_bull_response = find_similar_bull(specified_bull, target_company, relevant_traits, touros_df)
-            st.session_state.response = similar_bull_response
-        else:
-            st.session_state.response = "Por favor, especifique o nome do touro e a empresa alvo."
-
-        # Clear the user query
-        st.session_state.user_query = ""
-        return
-
-    # Check if the user is asking for a trait definition
-    if "definir" in user_query.lower() or "definição" in user_query.lower():
-        trait_definitions = find_trait_definition(relevant_traits, traits_df)
-        trait_definitions_combined = "\n".join(trait_definitions)
-        st.session_state.response = f"Informações adicionais sobre o(s) traço(s) relevante(s):\n{trait_definitions_combined}"
-        st.session_state.user_query = ""
-        return
-
-    # Filter bulls by companies and specific bull names
-    if company_names:
-        filtered_bulls_df = touros_df[touros_df['Company'].str.contains('|'.join(company_names), case=False, na=False)]
+# Function to search for bull traits
+def consulta_touro(touros_df, search_term):
+    touro = touros_df[touros_df['LongName'] == search_term]
+    if touro.empty:
+        st.write("Touro não encontrado.")
     else:
-        filtered_bulls_df = touros_df
+        exibir_informacoes_touro(touro.iloc[0])
+        response = generate_response(gerar_prompt_touros(touro, traits_df))
+        st.write("\n**Resposta da LLM**\n")
+        st.write(response)
 
-    if bull_names:
-        filtered_bulls_df = filtered_bulls_df[
-            (filtered_bulls_df['ShortName'].str.lower().isin([name.lower() for name in bull_names])) |
-            (filtered_bulls_df['NAABCode'].str.lower().isin([name.lower() for name in bull_names])) |
-            (filtered_bulls_df['BullKey'].str.lower().isin([name.lower() for name in bull_names])) |
-            (filtered_bulls_df['LongName'].str.lower().isin([name.lower() for name in bull_names]))
-        ]
+# Function to compare bulls
+def comparar_touros(touros_df, search_terms):
+    touros = touros_df[touros_df['LongName'].isin(search_terms)]
+    if touros.empty:
+        st.write("Nenhum touro encontrado.")
+    else:
+        available_columns = [col for col in ["ShortName", "LongName", "NAABCode", touros_key_column] + index_traits + production_traits + health_traits + fertility_traits + compounds_traits + conformation_traits if col in touros.columns]
+        comparison_df = touros[available_columns]
+        st.dataframe(comparison_df)
+        
+        response = generate_response(gerar_prompt_touros(touros, traits_df))
+        st.write("\n**Resposta da LLM**\n")
+        st.write(response)
 
-    # Remove duplicates by ShortName to ensure only one bull per name
-    filtered_bulls_df = filtered_bulls_df.drop_duplicates(subset=['ShortName'])
-
-    # Extract PTA data for the filtered bulls
-    pta_data = get_bull_pta(filtered_bulls_df, relevant_traits)
-
-    # Find trait definitions
-    trait_definitions = find_trait_definition(relevant_traits, traits_df)
-
-    # Create the prompt for the language model
-    pta_info_list = []
-    for bull_name, pta_values in pta_data.items():
-        if pta_values:
-            pta_info = "\n".join([f"O valor para {trait_mapping.get(trait, trait)} para o touro {bull_name} é {value}." for trait, value in pta_values.items()])
+# Function to find similar bulls
+def touros_similares(touros_df, search_term, trait_group, companies=None):
+    touro = touros_df[touros_df['LongName'] == search_term]
+    if touro.empty:
+        st.write("Touro não encontrado.")
+    else:
+        exibir_informacoes_touro(touro.iloc[0])
+        trait_columns = [col for col in trait_group if col in touros_df.columns]
+        normalized_traits = normalize(touros_df, trait_columns)
+        reference_traits = normalized_traits[touros_df[touros_key_column] == touro[touros_key_column].values[0]].values.flatten()
+        
+        if companies:
+            touros_df_filtered = touros_df[touros_df['Company'].isin(companies)]
         else:
-            pta_info = f"No data found for bull {bull_name}."
-        pta_info_list.append(pta_info)
+            touros_df_filtered = touros_df.copy()
+        
+        touros_df_filtered = touros_df_filtered[touros_df_filtered[touros_key_column] != touro[touros_key_column].values[0]]
+        
+        normalized_traits_filtered = normalized_traits.loc[touros_df_filtered.index]
+        
+        touros_df_filtered['distance'] = normalized_traits_filtered.apply(lambda row: euclidean(reference_traits, row), axis=1)
+        similar_bulls = touros_df_filtered.sort_values(by='distance').head(5)
+        
+        st.write("Touros Similares:")
+        available_columns = [col for col in ["ShortName", "LongName", "NAABCode", touros_key_column] + trait_columns if col in similar_bulls.columns]
+        comparison_df = similar_bulls[available_columns]
+        st.dataframe(comparison_df)
 
-    pta_info_combined = "\n\n".join(pta_info_list)
-    trait_definitions_combined = "\n".join(trait_definitions)
-    prompt = f"""{user_query}
+        response = generate_response(gerar_prompt_touros(similar_bulls, traits_df))
+        st.write("\n**Resposta da LLM**\n")
+        st.write(response)
 
-    Aqui temos os valores do banco de dados:
-    {pta_info_combined}
+# Streamlit Interface
+st.title("Consulta de Touros")
 
-    Informações adicionais sobre o(s) traço(s) relevante(s):
-    {trait_definitions_combined}
-    """
+funcionalidade = st.selectbox("Escolha uma funcionalidade", ["Consulta de Prova de Touro", "Comparar Touros", "Touro Similar"])
 
-    print(prompt)
-
-    # Generate the response
-    response = generate_response(prompt)
-
-    # Display the result
-    st.session_state.response = response
-
-    # Clear the user query
-    st.session_state.user_query = ""
-
-# Form for user input
-with st.form(key='query_form', clear_on_submit=True):
-    st.text_input('Escreva sua pergunta aqui', key='user_query')
-    submit_button = st.form_submit_button(label='Enviar', on_click=submit_form)
-
-# Display the result below the text input
-if 'response' in st.session_state:
-    st.write(st.session_state.response)
+if funcionalidade == "Consulta de Prova de Touro":
+    search_term = st.selectbox("Digite o LongName do touro", touros_df['LongName'].tolist())
+    if st.button("Buscar"):
+        consulta_touro(touros_df, search_term)
+elif funcionalidade == "Comparar Touros":
+    search_terms = st.multiselect("Digite os LongNames dos touros", touros_df['LongName'].tolist())
+    if st.button("Comparar"):
+        comparar_touros(touros_df, search_terms)
+elif funcionalidade == "Touro Similar":
+    search_term = st.selectbox("Digite o LongName do touro de referência", touros_df['LongName'].tolist())
+    trait_group_name = st.selectbox("Escolha o grupo de características", ["Principais características", "Produção", "Saúde e fertilidade", "Conformação"])
+    trait_group = []
+    if trait_group_name == "Principais características":
+        trait_group = main_traits
+    elif trait_group_name == "Produção":
+        trait_group = production_traits
+    elif trait_group_name == "Saúde e fertilidade":
+        trait_group = health_traits
+    elif trait_group_name == "Conformação":
+        trait_group = conformation_traits
+    
+    companies = st.multiselect("Escolha as empresas (opcional)", touros_df['Company'].unique().tolist())
+    
+    if st.button("Encontrar Touros Similares"):
+        touros_similares(touros_df, search_term, trait_group, companies)
